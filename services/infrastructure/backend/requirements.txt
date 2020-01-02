@@ -1,0 +1,4 @@
+aiohttp[speedups]
+python-terraform
+multidict
+requests

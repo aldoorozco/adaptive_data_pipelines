@@ -1,0 +1,6 @@
+aiohttp[speedups]
+multidict
+requests
+boto3
+botocore
+pyspark

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="resources/css/codemirror.css">
+    <link rel="stylesheet" href="resources/css/style.css">
+    <meta charset="utf-8"/>
+    <title>Adaptive Big Data Pipelines</title>
+    <link rel="icon" href="resources/images/pipeline.jpg">
+  </head>
+  <body>
+    <div class="container">  
+      <form id="new-job">
+        <h3>Create New job</h3>
+        <hr>
+        <fieldset>
+          <input placeholder="Job Name" id="job-name" type="text">
+        </fieldset>
+        <hr>
+        <h4>Sources</h4>
+          <!--
+        <fieldset>
+          <select id="source-database">
+            <option selected disable hidden>Database</option>
+            <option>default</option>
+          </select>
+        </fieldset>
+          -->
+        <fieldset>
+          <input placeholder="Table1 Short Name" id="source1-table-name" type="text">
+        </fieldset>
+        <fieldset>
+          <input placeholder="Input file path" type="text" id="source1-path">
+          <input type="file" id="source1-inputfile" class="inputfile"/>
+          <label for="source1-inputfile">Choose a file</label>
+        </fieldset>
+        <fieldset>
+          <input placeholder="Table2 Short Name" id="source2-table-name" type="text">
+        </fieldset>
+        <fieldset>
+          <input placeholder="Input file path" type="text" id="source2-path">
+          <input type="file" id="source2-inputfile" class="inputfile"/>
+          <label for="source2-inputfile">Choose a file</label>
+        </fieldset>
+        <hr>
+        <h4>Transformations</h4>
+        <fieldset>
+          SQL Query<br>
+          <textarea placeholder="Query" id="transform-sql-area"></textarea>
+        </fieldset>
+        <hr>
+        <h4>Destination</h4>
+          <!--
+        <fieldset>
+          <select id="dest-database">
+            <option selected disabled hidden>Database</option>
+            <option>default</option>
+          </select>
+        </fieldset>
+          -->
+        <fieldset>
+          <input placeholder="Output table short name" type="text" id="dest-table-name" autofocus>
+        </fieldset>
+        <fieldset>
+          <input placeholder="CRON expression" type="text" id="cron-expression" autofocus>
+        </fieldset>
+        <fieldset>
+          <hr>
+        </fieldset>
+        <fieldset>
+          <div class="lds-ring" id="loader"><div></div><div></div><div></div><div></div></div>
+          <label>Current infra status: </label>
+          <label id="infra_status"></label>
+        </fieldset>
+        <fieldset>
+          <button type="button" id="submit" disabled>Create</button>
+        </fieldset>
+        <fieldset>
+          <hr>
+        </fieldset>
+        <fieldset>
+          <button type="button" id="scheduling" disabled>View Scheduling</button>
+        </fieldset>
+        <fieldset>
+          <button type="button" id="lineage" disabled>View Lineage</button>
+        </fieldset>
+      </form>
+    </div>
+    <script src="resources/js/codemirror.js"></script>
+    <script src="resources/js/sql.js"></script>
+    <script src="resources/js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,4 @@
+TODO:
+  - Modify UI to latest design
+  - Implement states in job_scheduler so that the UI can access what is happening to the process
+  - Add two buttons to access spline and airflow

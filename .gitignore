@@ -1,0 +1,12 @@
+*.json
+*.csv
+*.xlsx
+*.xml
+node_modules
+**/.terraform/*
+*.tfstate
+__pycache__
+derby.log
+metastore_db
+target
+credentials

@@ -1,0 +1,164 @@
+version: "3"
+services:
+    redis:
+        container_name: redis
+        image: redis:5.0.5
+        restart: always
+        # command: redis-server --requirepass redispass
+
+    postgres:
+        container_name: postgres
+        image: postgres:9.6
+        restart: always
+        environment:
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflow
+            - POSTGRES_DB=airflow
+        logging:
+            driver: none
+        # Uncomment these lines to persist data on the local filesystem.
+        #     - PGDATA=/var/lib/postgresql/data/pgdata
+        # volumes:
+        #     - ./pgdata:/var/lib/postgresql/data/pgdata
+
+    webserver:
+        container_name: airflow_webserver
+        #image: puckel/docker-airflow:1.10.4
+        build: airflow_webserver/
+        restart: always
+        depends_on:
+            - postgres
+            - redis
+        environment:
+            - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+            - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=10
+            - LOAD_EX=n
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+            - "PYTHONPATH=$PYTHONPATH:/usr/local/airflow/dags"
+            # - POSTGRES_USER=airflow
+            # - POSTGRES_PASSWORD=airflow
+            # - POSTGRES_DB=airflow
+            # - REDIS_PASSWORD=redispass
+        volumes:
+            - ./dag_admin/dags:/usr/local/airflow/dags
+        ports:
+            - "8081:8080"
+        command: webserver
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
+
+    flower:
+        container_name: airflow_flower
+        image: puckel/docker-airflow:1.10.4
+        restart: always
+        depends_on:
+            - redis
+        environment:
+            - EXECUTOR=Celery
+            # - REDIS_PASSWORD=redispass
+        ports:
+            - "5555:5555"
+        command: flower
+        logging:
+            driver: none
+
+    scheduler:
+        container_name: airflow_scheduler
+        #image: puckel/docker-airflow:1.10.4
+        build: airflow_scheduler/
+        restart: always
+        depends_on:
+            - webserver
+        volumes:
+            - ./dag_admin/dags:/usr/local/airflow/dags
+            # Uncomment to include custom plugins
+            # - ./plugins:/usr/local/airflow/plugins
+        environment:
+            - LOAD_EX=n
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+            - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+            - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=10
+            # - POSTGRES_USER=airflow
+            # - POSTGRES_PASSWORD=airflow
+            # - POSTGRES_DB=airflow
+            # - REDIS_PASSWORD=redispass
+        command: scheduler
+
+    worker:
+        container_name: airflow_worker
+        #image: puckel/docker-airflow:1.10.4
+        build: airflow_worker/
+        restart: always
+        depends_on:
+            - scheduler
+        volumes:
+            - ./dag_admin/dags:/usr/local/airflow/dags
+        environment:
+            - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+            - "PYTHONPATH=$PYTHONPATH:/usr/local/airflow/dags"
+            - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=10
+            # - POSTGRES_USER=airflow
+            # - POSTGRES_PASSWORD=airflow
+            # - POSTGRES_DB=airflow
+            # - REDIS_PASSWORD=redispass
+        command: worker
+
+    infrastructure: 
+        container_name: infrastructure
+        environment:
+        - SERVICE_PORT=5000
+        build: infrastructure/ 
+        ports: 
+        - "5000:5000" 
+
+    job_scheduler: 
+        container_name: job_scheduler
+        environment:
+        - SERVICE_PORT=5001
+        - PYSPARK_PYTHON=python3
+        build: job_scheduler/ 
+        ports: 
+        - "5001:5001"
+        volumes:
+        - /:/app/root
+        links:
+        - infrastructure
+
+    dag_admin: 
+        container_name: dag_admin
+        build: dag_admin/ 
+        ports: 
+        - "5000:5000"
+        volumes:
+        - ./dag_admin/dags:/app/backend/dags
+
+    mongo:
+        container_name: mongo
+        image: mongo:3.4.23
+        ports:
+        - "27017:27017"
+        logging:
+            driver: none
+
+    governance:
+        container_name: governance
+        build: governance/
+        ports:
+        - "8080:8080"
+        depends_on:
+        - mongo
+        logging:
+            driver: none
+
+    ui: 
+        container_name: webserver
+        build: ui/ 
+        ports: 
+        - "8080:8080"
