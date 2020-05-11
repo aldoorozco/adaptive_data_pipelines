@@ -1,13 +1,13 @@
 var respStatus = null
 var respOutput = null
 var superserverIp = null
+
 /* Since javascript runs in the browser, it cannot directly read configuration for the rest
  * of the microservices. Therefore, we include a map with the service and its corresponding port */
 ports = {
     "infrastructure": '5000',
     "job_scheduler": '5001'
 }
-
 
 function sendRequest(port, path, method, content, callback) {
     url = `http://localhost:${port}/${path}`
@@ -110,6 +110,8 @@ document.getElementById('submit').onclick = function () {
     var source1Path = document.getElementById('source1-path').value
     var source2Table = document.getElementById('source2-table-name').value
     var source2Path = document.getElementById('source2-path').value
+    var source3Table = document.getElementById('source3-table-name').value
+    var source3Path = document.getElementById('source3-path').value
 
     var transformSqlQuery = document.getElementById('transform-sql-area').value
     var destTable = document.getElementById('dest-table-name').value
@@ -134,6 +136,11 @@ document.getElementById('submit').onclick = function () {
         configs["source2_table"] = source2Table
         configs["source2_path"] = source2Path
         sourceCount = 2
+    }
+    if (source3Table.length > 0 && source3Path.length > 0) {
+        configs["source3_table"] = source3Table
+        configs["source3_path"] = source3Path
+        sourceCount = 3
     }
     configs["source_count"] = sourceCount
 
