@@ -12,8 +12,9 @@ import os
 class Job:
     storage = Storage()
     fs_mountpoint = '/app/root'
-    datapoints_per_partition = 140000
     minimum_partitions = 6
+    # Size per shuffle partition
+    bytes_per_partition = 100 * 1024 * 1024
     def __init__(self):
        pass 
 
@@ -29,11 +30,14 @@ class Job:
             metadata = Job.get_metadata(local_source_path).__dict__
             remote_path = Job.migrate(foundation_output['datalake_bucket'], local_source_path, i)
 
-            configs['partitions'] = int(int(metadata['columns_count'] * metadata['rows_count'])\
-                                    / Job.datapoints_per_partition)\
-                                    + Job.minimum_partitions\
-                                    + configs.get('partitions', 0)
+            configs['partitions'] = (metadata['size'] / Job.bytes_per_partition)\
+                                        + 1 + configs.get('partitions', 0)
+
             configs[f'source{i}_path'] = remote_path
+
+        # Ensure at least the minimum partitions
+        if configs['partitions'] < Job.minimum_partitions:
+            configs['partitions'] = Job.minimum_partitions
 
         configs['public_subnet_id'] = foundation_output['public_subnet_id']
         configs['private_subnet_id'] = foundation_output['private_subnet_id']
@@ -50,15 +54,17 @@ class Job:
     @staticmethod
     def get_metadata(file_path=None, database=None, table=None):
         metadata = None
-        if file_path and isfile(file_path):
+        if file_path:
             if file_path.endswith('csv'):
                 metadata = Metadata('csv', filename=file_path) 
             elif file_path.endswith('xlsx'):
                 metadata = Metadata('xlsx', filename=file_path)
             elif file_path.endswith('json'):
                 metadata = Metadata('json', filename=file_path)
+            elif os.isdir(file_path):
+                metadata = Metadata(None, filename=file_path)
             else:
-                raise Exception(f'[Error] Unsupported file extension {file_path}')
+                raise Exception('Invalid metadata')
         elif database is not None and table is not None:
             metadata = Metadata('mysql', database=database, table=table)
         else:

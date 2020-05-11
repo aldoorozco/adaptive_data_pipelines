@@ -5,10 +5,10 @@ import requests
 
 class Cluster:
     client = boto3.client('emr', region_name='us-east-1')
-    master_instance_type = 'm5.2xlarge'
+    master_instance_type = 'm5.xlarge'
     emr_version = 'emr-5.29.0'
     ec2_key_name = 'deploy'
-    partitions_per_core = 1500
+    partitions_per_core = 10
 
     def __init__(self):
         pass
@@ -38,21 +38,20 @@ class Cluster:
         service_access_sg
     ):
         settings = Cluster.calculate_settings(partitions)
-        print(f'Got these settings {settings}')
+        print(f'Received cluster creation request with the following settings {settings}')
         sql_query = sql.replace('\n', ' ')\
                         .replace('`', '\`')
+
         step_args = ['spark-submit',
                      '--deploy-mode', 'cluster',
                      '--master', 'yarn',
                      '--class', 'com.tog.template.Main',
                      '--num-executors', settings['executors'],
-                     #'--executor-cores', settings['cores'],
-                     #'--executor-memory', settings['memory'],
                      '--conf', f'spark.sql.shuffle.partitions={partitions}',
                      template_path,
                      sql_query, destination_table,
                      destination_path]
-        app_names = ['hadoop', 'spark', 'hive', 'tez']
+        app_names = ['spark', 'hive']
         apps = [dict(Name=x) for x in app_names]
 
         mongo_server_ip = requests.get('https://api.ipify.org').text

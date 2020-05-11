@@ -1,8 +1,14 @@
 from pyspark.sql import SparkSession
 from os import path
+from collections import Counter
 
 class Metadata():
     def __init__(self, source_type, database=None, table=None, filename=None):
+        if source_type is None:
+            extensions = [f.split('.')[1] for f in listdir(filename) if isfile(join(filename, f))]
+            cntr = Counter(extensions)
+            sorted_extensions = {k: v for k, v in sorted(cntr.items(), key=lambda item: item[1])}
+            source_type = sorted_extensions.keys()[0]
         spark = (
             SparkSession.builder
                       .appName('Metadata extractor')
@@ -30,9 +36,6 @@ class Metadata():
         else:
             raise Exception('Unable to find option {}'.format(input_type))
 
-        self.columns = df.columns
-        self.columns_count = len(df.columns)
-        self.rows_count = df.count()
         # TODO: get the real size from mysql
         self.size = 0 if source_type == 'mysql' else path.getsize(filename)
         self.source_type = source_type
