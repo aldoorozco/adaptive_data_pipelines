@@ -14,6 +14,14 @@ output "foundation_emr_role" {
   value = module.foundation.emr_role
 }
 
+output "foundation_superserver_role" {
+  value = module.foundation.superserver_role
+}
+
+output "foundation_superserver_keypair" {
+  value = module.foundation.superserver_keypair
+}
+
 output "foundation_template_bucket" {
   value = module.foundation.template_bucket
 }

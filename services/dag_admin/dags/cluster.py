@@ -6,7 +6,7 @@ import requests
 class Cluster:
     client = boto3.client('emr', region_name='us-east-1')
     master_instance_type = 'm5.2xlarge'
-    emr_version = 'emr-5.25.0'
+    emr_version = 'emr-5.29.0'
     ec2_key_name = 'deploy'
     partitions_per_core = 1500
 

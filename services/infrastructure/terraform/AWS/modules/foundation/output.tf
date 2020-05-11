@@ -10,6 +10,9 @@ output "glue_role" {
 output "emr_role" {
   value = module.iam.emr_role
 }
+output "superserver_role" {
+  value = module.iam.superserver_role
+}
 output "template_bucket" {
   value = module.s3.template_bucket
 }
@@ -30,4 +33,7 @@ output "master_security_group" {
 }
 output "slave_security_group" {
   value = module.vpc.slave_security_group
+}
+output "superserver_keypair" {
+  value = module.vpc.superserver_keypair
 }

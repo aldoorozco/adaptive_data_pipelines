@@ -17,3 +17,7 @@ output "master_security_group" {
 output "slave_security_group" {
   value = aws_security_group.slave.id
 }
+
+output "superserver_keypair" {
+  value = aws_key_pair.deployer.key_name
+}

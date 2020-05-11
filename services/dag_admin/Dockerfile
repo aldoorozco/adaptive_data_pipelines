@@ -26,7 +26,6 @@ COPY template /app/template
 RUN cd /app/template && mvn package
 
 COPY backend /app/backend
-COPY ../credentials /root/.aws/credentials
 RUN cd /app/backend && pip3 install -r requirements.txt
 
 WORKDIR /app/backend

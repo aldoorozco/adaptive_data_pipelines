@@ -22,11 +22,16 @@ resource "aws_route_table" "public" {
   }
 }
 
+resource "aws_key_pair" "deployer" {
+  key_name   = "deploy"
+  public_key = file("${path.root}/deploy.pub")
+}
+
 resource "aws_instance" "nat" {
   ami                         = "ami-00a9d4a05375b2763"
   availability_zone           = "us-east-1a"
   instance_type               = "t2.micro"
-  key_name                    = "deploy"
+  key_name                    = aws_key_pair.deployer.key_name
   vpc_security_group_ids      = [aws_security_group.nat.id]
   subnet_id                   = aws_subnet.public.id
   associate_public_ip_address = true
@@ -85,8 +90,8 @@ resource "aws_security_group" "master" {
 }
 
 resource "aws_security_group_rule" "slave_to_master" {
-  source_security_group_id = "${aws_security_group.slave.id}"
-  security_group_id        = "${aws_security_group.master.id}"
+  source_security_group_id = aws_security_group.slave.id
+  security_group_id        = aws_security_group.master.id
   from_port                = 0
   to_port                  = 0
   protocol                 = "-1"
@@ -94,8 +99,8 @@ resource "aws_security_group_rule" "slave_to_master" {
 }
 
 resource "aws_security_group_rule" "master_to_slave" {
-  source_security_group_id = "${aws_security_group.master.id}"
-  security_group_id        = "${aws_security_group.slave.id}"
+  source_security_group_id = aws_security_group.master.id
+  security_group_id        = aws_security_group.slave.id
   from_port                = 0
   to_port                  = 0
   protocol                 = "-1"
@@ -103,8 +108,8 @@ resource "aws_security_group_rule" "master_to_slave" {
 }
 
 resource "aws_security_group_rule" "slave_to_slave" {
-  source_security_group_id = "${aws_security_group.slave.id}"
-  security_group_id        = "${aws_security_group.slave.id}"
+  source_security_group_id = aws_security_group.slave.id
+  security_group_id        = aws_security_group.slave.id
   from_port                = 0
   to_port                  = 0
   protocol                 = "-1"

@@ -6,4 +6,6 @@ module "ec2" {
   instance_type    = var.instance_type
   script_path      = "${path.root}/scripts/bootstrap.sh"
   security_group   = var.security_group
+  iam_role         = var.superserver_role
+  ec2_keypair      = var.superserver_keypair
 }

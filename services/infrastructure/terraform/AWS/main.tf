@@ -5,9 +5,9 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket = var.terraform_bucket
+    bucket = "abdp-terraform"
     key    = "state"
-    region = var.region
+    region = "us-east-1"
   }
 }
 
@@ -17,7 +17,9 @@ module "foundation" {
 }
 
 module "superserver" {
-  source           = "./modules/superserver"
-  public_subnet_id = var.public_subnet_id
-  security_group   = var.security_group
+  source              = "./modules/superserver"
+  public_subnet_id    = var.public_subnet_id
+  security_group      = var.security_group
+  superserver_role    = var.superserver_role
+  superserver_keypair = var.superserver_keypair
 }

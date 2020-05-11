@@ -4,7 +4,6 @@ services:
         container_name: redis
         image: redis:5.0.5
         restart: always
-        # command: redis-server --requirepass redispass
 
     postgres:
         container_name: postgres
@@ -16,14 +15,9 @@ services:
             - POSTGRES_DB=airflow
         logging:
             driver: none
-        # Uncomment these lines to persist data on the local filesystem.
-        #     - PGDATA=/var/lib/postgresql/data/pgdata
-        # volumes:
-        #     - ./pgdata:/var/lib/postgresql/data/pgdata
 
     webserver:
         container_name: airflow_webserver
-        #image: puckel/docker-airflow:1.10.4
         build: airflow_webserver/
         restart: always
         depends_on:
@@ -33,13 +27,9 @@ services:
             - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
             - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=10
             - LOAD_EX=n
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - FERNET_KEY=$FERNET_KEY
             - EXECUTOR=Celery
             - "PYTHONPATH=$PYTHONPATH:/usr/local/airflow/dags"
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
-            # - REDIS_PASSWORD=redispass
         volumes:
             - ./dag_admin/dags:/usr/local/airflow/dags
         ports:
@@ -59,7 +49,6 @@ services:
             - redis
         environment:
             - EXECUTOR=Celery
-            # - REDIS_PASSWORD=redispass
         ports:
             - "5555:5555"
         command: flower
@@ -68,30 +57,22 @@ services:
 
     scheduler:
         container_name: airflow_scheduler
-        #image: puckel/docker-airflow:1.10.4
         build: airflow_scheduler/
         restart: always
         depends_on:
             - webserver
         volumes:
             - ./dag_admin/dags:/usr/local/airflow/dags
-            # Uncomment to include custom plugins
-            # - ./plugins:/usr/local/airflow/plugins
         environment:
             - LOAD_EX=n
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - FERNET_KEY=$FERNET_KEY
             - EXECUTOR=Celery
             - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
             - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=10
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
-            # - REDIS_PASSWORD=redispass
         command: scheduler
 
     worker:
         container_name: airflow_worker
-        #image: puckel/docker-airflow:1.10.4
         build: airflow_worker/
         restart: always
         depends_on:
@@ -100,14 +81,10 @@ services:
             - ./dag_admin/dags:/usr/local/airflow/dags
         environment:
             - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - FERNET_KEY=$FERNET_KEY
             - EXECUTOR=Celery
             - "PYTHONPATH=$PYTHONPATH:/usr/local/airflow/dags"
             - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=10
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
-            # - REDIS_PASSWORD=redispass
         command: worker
 
     infrastructure: 
@@ -117,6 +94,8 @@ services:
         build: infrastructure/ 
         ports: 
         - "5000:5000" 
+        volumes:
+        - ~/.aws:/root/.aws
 
     job_scheduler: 
         container_name: job_scheduler
@@ -128,6 +107,7 @@ services:
         - "5001:5001"
         volumes:
         - /:/app/root
+        - ~/.aws:/root/.aws
         links:
         - infrastructure
 

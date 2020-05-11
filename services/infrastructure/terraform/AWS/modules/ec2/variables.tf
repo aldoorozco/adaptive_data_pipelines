@@ -17,3 +17,11 @@ variable "script_path" {
 variable "security_group" {
   description = "The security group that restricts port access"
 }
+
+variable "iam_role" {
+  description = "The IAM role for the instance"
+}
+
+variable "ec2_keypair" {
+  description = "The keypair to access the instance"
+}

@@ -25,7 +25,7 @@ variable "local_ip" {
 
 variable "profile" {
   description = "AWS user profile name"
-  default     = "pipeline_admin"
+  default     = "abdp-infra"
 }
 
 variable "region" {
@@ -36,4 +36,14 @@ variable "region" {
 variable "terraform_bucket" {
   description = "The AWS S3 bucket where the terraform remote state will be hosted"
   default     = "abdp-terraform"
+}
+
+variable "superserver_role" {
+  description = "The superserver iam role"
+  default     = "dummy"
+}
+
+variable "superserver_keypair" {
+  description = "The superserver ec2 instance keypair"
+  default     = "dummy"
 }

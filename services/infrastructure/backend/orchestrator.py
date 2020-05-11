@@ -58,10 +58,14 @@ class Orchestrator:
 
         self.update_status()
         # Superserver requires both a public_subnet_id and a security_group
+        outputs = self.__services['foundation']['outputs']
+        print(outputs)
         superserver_options = {
             'var': {
-                "public_subnet_id": self.__services['foundation']['outputs']['public_subnet_id'],
-                "security_group": self.__services['foundation']['outputs']['superserver_security_group']
+                "public_subnet_id": outputs['public_subnet_id'],
+                "security_group": outputs['superserver_security_group'],
+                "superserver_role": outputs['superserver_role'],
+                "superserver_keypair": outputs['superserver_keypair']
             }
         }
         self.setup_module(

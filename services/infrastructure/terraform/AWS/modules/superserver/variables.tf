@@ -10,3 +10,11 @@ variable "instance_type" {
   description = "The instance type"
   default     = "m5.xlarge"
 }
+
+variable "superserver_role" {
+  description = "The supserserver instance role"
+}
+
+variable "superserver_keypair" {
+  description = "The supserserver instance keypair"
+}
