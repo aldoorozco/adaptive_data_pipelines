@@ -1,8 +1,8 @@
 *.json
 *.csv
 *.xlsx
-*.xml
 node_modules
+dependency-reduced-pom.xml
 **/.terraform/*
 *.tfstate
 __pycache__
