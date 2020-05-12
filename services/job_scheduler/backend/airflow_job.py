@@ -28,7 +28,11 @@ class Job:
         for i in range(1, sources_count + 1):
             local_source_path = Job.fs_mountpoint + configs[f'source{i}_path']
             metadata = Job.get_metadata(local_source_path).__dict__
-            remote_path = Job.migrate(foundation_output['datalake_bucket'], local_source_path, i)
+            remote_path = Job.migrate(
+                foundation_output['datalake_bucket'],
+                metadata['files'],
+                i
+            )
 
             configs['partitions'] = (metadata['size'] / Job.bytes_per_partition)\
                                         + 1 + configs.get('partitions', 0)
@@ -75,7 +79,10 @@ class Job:
     def migrate(datalake_bucket, source_path, source_id):
         str_date = datetime.now().strftime('%Y%m%d')
 
-        return Job.storage.multi_part_copy(source_path, datalake_bucket, f'{str_date}/{source_id}')
+        path = f's3://{datalake_bucket}/{str_date}/{source_id}/{basename(source_path)}'
+        for f in source_path:
+            Job.storage.multi_part_copy(f, datalake_bucket, f'{str_date}/{source_id}')
+        return path
 
     @staticmethod
     def create_dag(superserver_ip, configs):
