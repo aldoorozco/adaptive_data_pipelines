@@ -2,26 +2,22 @@ var respStatus = null
 var respOutput = null
 var superserverIp = null
 
-/* Since javascript runs in the browser, it cannot directly read configuration for the rest
- * of the microservices. Therefore, we include a map with the service and its corresponding port */
-ports = {
-    "infrastructure": '5000',
-    "job_scheduler": '5001'
-}
+/* This variable will be automatically replaced by the replace_ip script */
+var fastifyIp = "{fastifyIp}"
 
-function sendRequest(port, path, method, content, callback) {
-    url = `http://localhost:${port}/${path}`
+function sendRequest(uri, path, method, content, callback) {
+    url = `http://${uri}:8080/${path}`
     console.log(`Sending request to: ${url}`)
-    var xhr = new XMLHttpRequest()
-    xhr.open(method, url, true)
+    var req = new XMLHttpRequest()
+    req.open(method, url, true)
     /* We use x-www-form-urlencoded since json causes aiohttp server to throw 405 unexpectedly */
-    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhr.onreadystatechange = function() {
+    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    req.onreadystatechange = function() {
         if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-            callback(xhr.response)
+            callback(req.response)
         }
     }
-    xhr.send(JSON.stringify(content))
+    req.send(JSON.stringify(content))
 }
 
 function setRespStatus(resp) {
@@ -29,7 +25,13 @@ function setRespStatus(resp) {
 }
 
 function getInfraStatus() {
-    sendRequest(ports['infrastructure'], 'status', 'GET', {}, setRespStatus)
+    sendRequest(
+        fastifyIp,
+        'status',
+        'GET',
+        {},
+        setRespStatus
+    )
     if (respStatus == null) {
         return null
     } else {
@@ -44,7 +46,13 @@ function setRespOutput(resp) {
 
 
 function getSuperserverIp() {
-    sendRequest(ports['infrastructure'], 'outputs/modules/superserver', 'GET', {}, setRespOutput)
+    sendRequest(
+        fastifyIp,
+        'outputs/modules/superserver',
+        'GET',
+        {},
+        setRespOutput
+    )
     if (respOutput == null) {
         return null
     } else {
@@ -81,7 +89,13 @@ updateStatus().then(() => {
 })
 
 function createPipeline(configs) {
-    sendRequest(ports['job_scheduler'], 'create_pipeline', 'POST', {"job_info": configs}, function(dummy){})
+    sendRequest(
+        fastifyIp,
+        'create_pipeline',
+        'POST',
+        {"job_info": configs},
+        function(dummy){}
+    )
 }
 
 /* Assign text area to code mirror to highlight SQL syntaxis */
