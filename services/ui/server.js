@@ -1,7 +1,6 @@
 const fastify = require('fastify')({ logger: true })
 const path = require('path')
-
-/* fastify.register(require('fastify-http-client')) */
+var infraSetup = false
 
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname, 'resources'),
@@ -15,19 +14,31 @@ fastify.get('/', function (req, reply) {
 
 var request = require('urllib-sync').request
 
-function sendLocalReq(port, path, method, data) {
-  var res = request(
-      `http://localhost:${port}/${path}`, {
-          method: method,
-          data: data
-      }
-  )
-  console.out(res.data)
+function sendLocalReq(service, port, path, method='GET', content={}) {
+  const url = `http://${service}:${port}/${path}`
+  const args = {
+      method: method,
+      headers: {'Content-Type': 'application/json'}
+      content: JSON.stringify(content)
+  }
+  const res = request(url, args)
+  return res.data
 }
+
+/* Set up infra */
+fastify.post('/setup_infra', function (req, reply) {
+  const ip = req.raw.connection.remoteAddress
+  const data = sendLocalReq('infrastructure', '5000', 'setup', 'POST', {ip: ip})
+  infraSetup = true
+  reply
+    .code(200)
+    .header('Content-Type', 'application/json; charset=utf-8')
+    .send(data)
+})
 
 /* Get infra status */
 fastify.get('/status', function (req, reply) {
-  data = sendLocalReq('5000', 'status', 'GET', {})
+  const data = sendLocalReq('infrastructure', '5000', 'status')
   reply
     .code(200)
     .header('Content-Type', 'application/json; charset=utf-8')
@@ -36,7 +47,9 @@ fastify.get('/status', function (req, reply) {
 
 /* Get output of specific modules */
 fastify.get('/outputs/modules/:params', function (req, reply) {
-  data = sendLocalReq('5000', `outputs/modules/${req.params}`, 'GET', {})
+  const { params: { params } } = req
+  fastify.log.info(`Params is ${params}`)
+  const data = sendLocalReq('infrastructure', '5000', `outputs/modules/${params}`)
   reply
     .code(200)
     .header('Content-Type', 'application/json; charset=utf-8')
@@ -44,7 +57,7 @@ fastify.get('/outputs/modules/:params', function (req, reply) {
 })
 
 fastify.post('/create_pipeline', function (req, reply) {
-  data = sendLocalReq('5001', 'create_pipeline', 'POST', req.body)
+  const data = sendLocalReq('job_scheduler', '5001', 'create_pipeline', 'POST', req.body)
   reply
     .code(200)
     .header('Content-Type', 'application/json; charset=utf-8')

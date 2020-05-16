@@ -26,9 +26,6 @@ class Orchestrator:
             'target': ['module.{}'],
             'capture_output': False
         }
-        thread = Thread(target=self.initialize_infra, args=())
-        thread.daemon = True
-        thread.start()
         self.__status_index = 0
         self.__status = Orchestrator.states[0]
 
@@ -37,7 +34,7 @@ class Orchestrator:
             self.__status_index += 1
             self.__status = Orchestrator.states[self.__status_index]
 
-    def initialize_infra(self):
+    def setup_infra(self, ip):
         # Initialize terraform
         self.__execute_infra_cmd(
             module=None,
@@ -46,20 +43,23 @@ class Orchestrator:
             overwrite_options=True
         )
         self.update_status()
-        ip = requests.get('https://api.ipify.org').text
 
         self.__spin_up_services(ip)
 
-    def __spin_up_services(self, ip):
+    def __spin_up_services(self, pipeline_builder_ip):
         # Start the module by setting up the foundation
-        foundation_options = {'var':{'local_ip': ip}}
+        webserver_ip = requests.get('https://api.ipify.org').text
+        foundation_options = {
+            'var': {
+                'pipeline_builder_ip': pipeline_builder_ip,
+                'webserver_ip': webserver_ip
+            }
+        }
 
         self.setup_module('foundation', foundation_options)
 
         self.update_status()
-        # Superserver requires both a public_subnet_id and a security_group
         outputs = self.__services['foundation']['outputs']
-        print(outputs)
         superserver_options = {
             'var': {
                 "public_subnet_id": outputs['public_subnet_id'],
@@ -75,7 +75,6 @@ class Orchestrator:
         self.update_status()
 
     def __get_supported_services(self, path):
-        #return [f for f in listdir(path) if isdir(join(path, f))]
         return ['foundation', 'superserver']
 
     def __execute_infra_cmd(self, module, cmd, options=None, overwrite_options=False):

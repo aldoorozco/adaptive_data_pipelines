@@ -85,7 +85,7 @@ resource "aws_security_group" "master" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${var.local_ip}/32"]
+    cidr_blocks = ["${var.pipeline_builder_ip}/32"]
   }
 }
 
@@ -150,25 +150,31 @@ resource "aws_security_group" "superserver" {
     from_port   = 5000
     to_port     = 5000
     protocol    = "tcp"
-    cidr_blocks = ["${var.local_ip}/32"]
+    cidr_blocks = ["${var.webserver_ip}/32"]
   }
   ingress {
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = ["${var.local_ip}/32"]
+    cidr_blocks = ["${var.pipeline_builder_ip}/32"]
   }
   ingress {
     from_port   = 8081
     to_port     = 8081
     protocol    = "tcp"
-    cidr_blocks = ["${var.local_ip}/32"]
+    cidr_blocks = ["${var.pipeline_builder_ip}/32"]
   }
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${var.local_ip}/32"]
+    cidr_blocks = ["${var.pipeline_builder_ip}/32"]
+  }
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["${var.webserver_ip}/32"]
   }
   tags = {
     Name = "Superserver Security Group"

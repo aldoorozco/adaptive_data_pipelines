@@ -5,13 +5,21 @@ var superserverIp = null
 /* This variable will be automatically replaced by the replace_ip script */
 var fastifyIp = "{fastifyIp}"
 
-function sendRequest(uri, path, method, content, callback) {
+function setRespStatus(resp) {
+    respStatus = resp
+}
+
+function setRespOutput(resp) {
+    respOutput = resp
+}
+
+function sendRequest(uri, path, method='GET', content={}, callback=setRespStatus) {
     url = `http://${uri}:8080/${path}`
     console.log(`Sending request to: ${url}`)
     var req = new XMLHttpRequest()
     req.open(method, url, true)
-    /* We use x-www-form-urlencoded since json causes aiohttp server to throw 405 unexpectedly */
-    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    req.setRequestHeader('Content-type', 'application/json');
+    //req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     req.onreadystatechange = function() {
         if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
             callback(req.response)
@@ -20,18 +28,10 @@ function sendRequest(uri, path, method, content, callback) {
     req.send(JSON.stringify(content))
 }
 
-function setRespStatus(resp) {
-    respStatus = resp
-}
+sendRequest(fastifyIp, 'setup_infra', 'POST')
 
 function getInfraStatus() {
-    sendRequest(
-        fastifyIp,
-        'status',
-        'GET',
-        {},
-        setRespStatus
-    )
+    sendRequest(fastifyIp, 'status', 'GET', {}, setRespStatus)
     if (respStatus == null) {
         return null
     } else {
@@ -40,19 +40,8 @@ function getInfraStatus() {
     }
 }
 
-function setRespOutput(resp) {
-    respOutput = resp
-}
-
-
 function getSuperserverIp() {
-    sendRequest(
-        fastifyIp,
-        'outputs/modules/superserver',
-        'GET',
-        {},
-        setRespOutput
-    )
+    sendRequest(fastifyIp, 'outputs/modules/superserver', 'GET', {}, setRespOutput)
     if (respOutput == null) {
         return null
     } else {

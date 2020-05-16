@@ -9,16 +9,27 @@ class Handler(AbstractHandler):
 
     @staticmethod
     async def validate_request(request):
-        error_msg, decoded_body = await AbstractHandler.validate_request(request)
+        error_msg, body = await AbstractHandler.decode_request(request)
         module_name = None
 
         if not error_msg:
-            if 'module' not in decoded_body:
+            if 'module' not in body:
                 error_msg = 'Unable to find module in request'
             else:
-                module_name = decoded_body['module']
+                module_name = body['module']
 
         return error_msg, module_name
+
+    @staticmethod
+    @AbstractHandler.routes.post('/setup')
+    @AbstractHandler.intercept_request
+    async def setup_infra(request):
+        error_msg, body = await AbstractHandler.decode_request(request)
+        if not error_msg and 'ip' in body:
+            AbstractHandler.start_func_background(
+                Handler.orchest.setup_infra, (body['ip'],)
+            )
+        return error_msg, {}
 
     @staticmethod
     @AbstractHandler.routes.post('/setup_module')
@@ -26,7 +37,9 @@ class Handler(AbstractHandler):
     async def setup_module(request):
         error_msg, module = await Handler.validate_request(request)
         if not error_msg:
-            Handler.start_func_background(Handler.orchest.setup_module(module))
+            AbstractHandler.start_func_background(
+                Handler.orchest.setup_module(module)
+            )
         return error_msg, {}
 
     @staticmethod
@@ -35,7 +48,9 @@ class Handler(AbstractHandler):
     async def teardown_module(request):
         error_msg, module = await Handler.validate_request(request)
         if not error_msg:
-            AbstractHandler.start_func_background(Handler.orchest.teardown_module(module))
+            AbstractHandler.start_func_background(
+                Handler.orchest.teardown_module(module)
+            )
         return error_msg, {}
 
     @staticmethod

@@ -21,10 +21,8 @@ class AbstractHandler:
             try:
                 error, body = await func(*args, **kwargs)
                 if not error:
-                    #print('Successfully executed function')
                     return web.json_response(body, headers=AbstractHandler.cors_header)
                 else:
-                    #print(f'Something went wrong: {error}')
                     return web.Response(status=400, text=error, headers=AbstractHandler.cors_header)
             except Exception as e:
                 print(f'Exception found while executing: {e}')
@@ -41,14 +39,12 @@ class AbstractHandler:
         thread.start()
 
     @staticmethod
-    async def validate_request(request):
+    async def decode_request(request):
         error_msg = None
         decoded_body = None
 
         if request.body_exists:
             value = await request.content.read()
-            #s = value.decode()
-            #print(f'String previously to being decoded {s}')
             decoded_body = json.loads(value.decode())
             print(f'Decoded body: {decoded_body}')
         else:
