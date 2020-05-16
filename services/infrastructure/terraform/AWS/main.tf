@@ -12,8 +12,9 @@ terraform {
 }
 
 module "foundation" {
-  source   = "./modules/foundation"
-  local_ip = var.local_ip
+  source              = "./modules/foundation"
+  pipeline_builder_ip = var.pipeline_builder_ip
+  webserver_ip        = var.webserver_ip
 }
 
 module "superserver" {
