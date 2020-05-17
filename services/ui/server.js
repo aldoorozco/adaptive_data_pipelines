@@ -18,7 +18,7 @@ function sendLocalReq(service, port, path, method='GET', content={}) {
   const url = `http://${service}:${port}/${path}`
   const args = {
       method: method,
-      headers: {'Content-Type': 'application/json'}
+      headers: {'Content-Type': 'application/json'},
       content: JSON.stringify(content)
   }
   const res = request(url, args)
