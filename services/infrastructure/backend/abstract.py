@@ -30,11 +30,11 @@ class AbstractHandler:
         return wrapped
 
     @staticmethod
-    def start_func_background(func):
+    def start_func_background(func, args=()):
         """
         Executes a given 'func' in the background and returns immediately
         """
-        thread = Thread(target=func, args=())
+        thread = Thread(target=func, args=args)
         thread.daemon = True
         thread.start()
 

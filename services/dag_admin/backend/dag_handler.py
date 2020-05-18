@@ -37,13 +37,13 @@ class DagHandler:
             source_path = configs[f'source{i}_path']
             source_table = configs[f'source{i}_table']
             suffix_table = basename(source_path.rstrip('/'))
-            new_table_name = source_table + suffix_table.replace('.', '_')
-            print(f'Replacing {source_table} with {new_table_name}')
-            configs['sql_query'] = configs['sql_query'].replace(
-                source_table,
-                new_table_name
-            )
-            print(f'After replacement SQL:\n{configs["sql_query"]}')
+            autogen_table_name = source_table + suffix_table.replace('.', '_')
+            #print(f'Replacing {source_table} with {new_table_name}')
+            #configs['sql_query'] = configs['sql_query'].replace(
+            #    source_table,
+            #    new_table_name
+            #)
+            #print(f'After replacement SQL:\n{configs["sql_query"]}')
 
             job_name = f'{configs["job_name"]}_{source_table}'
 
@@ -52,14 +52,22 @@ class DagHandler:
                 job_name,
                 source_path,
                 source_table,
-                crawler_role_arn
+                crawler_role_arn,
+                autogen_table_name
             )
+        print(f'After replacement SQL:\n{configs["sql_query"]}')
 
         # Create the airflow DAG
         DagHandler.create_dag_from_template(configs)
 
     @staticmethod
-    def create_crawler(job_name, source_path, source_table, crawler_role_arn):
+    def create_crawler(
+            job_name,
+            source_path,
+            source_table,
+            crawler_role_arn,
+            autogen_table_name
+    ):
         crawler_name = job_name + '_crawler'
         try:
             resp = DagHandler.glue_client.delete_crawler(Name=crawler_name)
@@ -79,7 +87,21 @@ class DagHandler:
         )
         resp = DagHandler.glue_client.start_crawler(Name=crawler_name)
         DagHandler.wait_for_crawler_ready(crawler_name)
+        DagHandler.rename_table(autogen_table_name, source_table)
         return crawler_name
+
+    @staticmethod
+    def rename_table(old_name, new_name):
+        database = 'default'
+        resp = DagHandler.glue_client.get_table(DatabaseName=database, Name=old_name)
+        table_input = response['Table']
+        table_input['Name'] = new_name
+        table_input.pop('CreatedBy')
+        table_input.pop('CreateTime')
+        table_input.pop('UpdateTime')
+        table_input.pop('DatabaseName')
+        resp2 = DagHandler.glue_client.create_table(DatabaseName=database, TableInput=table_input)
+        print(f'Response to create new table {resp2}')
 
     @staticmethod
     def create_dag_from_template(configs):

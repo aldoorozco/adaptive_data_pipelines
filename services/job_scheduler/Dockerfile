@@ -21,17 +21,6 @@ RUN apk add --no-cache alpine-sdk libffi-dev && \
     pip3 install --no-cache --upgrade pip setuptools wheel && \
     if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi
 
-#RUN echo "**** Install Python ****" && \
-#    apk add --no-cache python37 python37-dev alpine-sdk libffi-dev && \
-#    if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
-#    \
-#    echo "**** Install pip ****" && \
-#    python3 -m ensurepip && \
-#    rm -r /usr/lib/python*/ensurepip && \
-#    apk add build-base && \
-#    pip3 install --no-cache --upgrade pip setuptools wheel && \
-#    if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi
-
 RUN mkdir /app
 
 COPY backend /app/backend

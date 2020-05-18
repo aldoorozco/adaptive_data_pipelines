@@ -42,10 +42,9 @@ class Storage:
                exists = False 
         return exists
 
-    def multi_part_copy(self, file_path, bucket, key):
-        # Multipart upload
-        full_key = f'{key}/{basename(file_path)}'
-        if self.file_exists(bucket, full_key):
+    def multi_part_copy(self, bucket, key, file_path):
+        key_file_name = f'{key}/{basename(file_path)}'
+        if self.file_exists(bucket, key_file_name):
             print(f'Skipping file copy {file_path}, as it already exists')
         else:
             cpus = len(os.sched_getaffinity(0)) * 2
@@ -58,7 +57,7 @@ class Storage:
                 use_threads=True
             )
             self.s3.meta.client.upload_file(
-                file_path, bucket, full_key,
+                file_path, bucket, key_file_name,
                 ExtraArgs={'ACL': 'private'},
                 Config=config,
                 Callback=ProgressPercentage(file_path)
@@ -66,7 +65,7 @@ class Storage:
             end = time.time()
             diff = end - start
             print(f'[INFO] Operation took {diff:.2f} seconds')
-        return f's3://{bucket}/{full_key}'
+        return f's3://{bucket}/{key_file_name}'
 
     def copy_bucket(self, file_path, bucket, key):
         full_key = f'{key}/{basename(file_path)}'

@@ -56,7 +56,9 @@ resource "aws_iam_policy" "superserver" {
       "Action": [
         "s3:*",
         "glue:*",
-        "elasticmapreduce:*"
+        "elasticmapreduce:*",
+        "iam:*",
+        "logs:*"
       ],
       "Effect": "Allow",
       "Resource": "*"

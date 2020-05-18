@@ -1,5 +1,8 @@
-variable "local_ip" {
-  description = "The local IP"
+variable "pipeline_builder_ip" {
+  description = "The public IP of the pipeline builder"
+}
+variable "webserver_ip" {
+  description = "The public IP of the webserver"
 }
 variable "vpc_cidr" {
   description = "The default VPC CIDR"
