@@ -85,7 +85,7 @@ class DagHandler:
         )
         resp = DagHandler.glue_client.start_crawler(Name=crawler_name)
         DagHandler.wait_for_crawler_ready(crawler_name)
-        DagHandler.rename_table(autogen_table_name, source_table)
+        #DagHandler.rename_table(autogen_table_name, source_table)
         return crawler_name
 
     @staticmethod
