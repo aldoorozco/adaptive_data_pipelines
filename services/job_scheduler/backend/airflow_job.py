@@ -36,8 +36,8 @@ class Job:
                 dateid
             )
 
-            configs['partitions'] = (metadata['size'] / Job.bytes_per_partition)\
-                                        + 1 + configs.get('partitions', 0)
+            configs['partitions'] = int((metadata['size'] / Job.bytes_per_partition)\
+                                        + 1 + configs.get('partitions', 0))
 
             configs[f'source{source_id}_path'] = remote_path
 
@@ -81,7 +81,7 @@ class Job:
 
     @staticmethod
     def migrate(datalake_bucket, source_path, table_name, dateid):
-        key = f'raw/table={table_name}/dateid={dateid}'
+        key = f'raw/{table_name}/dateid={dateid}'
         datalake_path = f's3://{datalake_bucket}/{key}'
         for file_path in source_path:
             Job.storage.multi_part_copy(datalake_bucket, key, file_path)

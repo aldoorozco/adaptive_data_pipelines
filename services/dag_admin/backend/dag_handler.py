@@ -1,6 +1,6 @@
 from clients import Clients
 from storage import Storage
-from os.path import basename
+from os.path import basename, dirname
 
 import requests
 import re
@@ -36,8 +36,8 @@ class DagHandler:
             print(f'source{i}_table')
             source_path = configs[f'source{i}_path']
             source_table = configs[f'source{i}_table']
-            suffix_table = basename(source_path.rstrip('/'))
-            autogen_table_name = source_table + suffix_table.replace('.', '_')
+            #suffix_table = basename(source_path.rstrip('/'))
+            #autogen_table_name = source_table + suffix_table.replace('.', '_')
             #print(f'Replacing {source_table} with {new_table_name}')
             #configs['sql_query'] = configs['sql_query'].replace(
             #    source_table,
@@ -52,8 +52,7 @@ class DagHandler:
                 job_name,
                 source_path,
                 source_table,
-                crawler_role_arn,
-                autogen_table_name
+                crawler_role_arn
             )
         print(f'After replacement SQL:\n{configs["sql_query"]}')
 
@@ -65,8 +64,7 @@ class DagHandler:
             job_name,
             source_path,
             source_table,
-            crawler_role_arn,
-            autogen_table_name
+            crawler_role_arn
     ):
         crawler_name = job_name + '_crawler'
         try:
@@ -78,8 +76,8 @@ class DagHandler:
             Name = crawler_name,
             DatabaseName = 'default',
             Role = crawler_role_arn,
-            Targets = {'S3Targets': [{'Path': source_path}]},
-            TablePrefix = source_table,
+            Targets = {'S3Targets': [{'Path': dirname(source_path)}]},
+            TablePrefix = '',
             SchemaChangePolicy = {
                 'UpdateBehavior': 'UPDATE_IN_DATABASE',
                 'DeleteBehavior': 'LOG'
@@ -87,7 +85,7 @@ class DagHandler:
         )
         resp = DagHandler.glue_client.start_crawler(Name=crawler_name)
         DagHandler.wait_for_crawler_ready(crawler_name)
-        DagHandler.rename_table(autogen_table_name, source_table)
+        #DagHandler.rename_table(autogen_table_name, source_table)
         return crawler_name
 
     @staticmethod
