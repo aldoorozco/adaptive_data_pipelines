@@ -17,21 +17,29 @@ class Cluster:
 
     @staticmethod
     def calculate_settings(partitions):
-        partitions_per_node = (executors_per_node * cores_per_executor * partitions_per_core)
+        partitions_per_node = (Cluster.executors_per_node * Cluster.cores_per_executor * Cluster.partitions_per_core)
         # Ensure at least 1 instance
-        instances = int(partitions / partitions_per_node) if partitions > partitions_per_node else 1
+        instances = int(int(partitions) / partitions_per_node) if int(partitions) > partitions_per_node else 1
         truncated_parts = int(instances * partitions_per_node)
         settings = {
-            'executors': str(instances),
+            'executors': str(instances + 1),
             'cores': '5',
             'memory': '18G',
-            'instance_type': 'm5.4xlarge'
+            'instance_type': 'm5.4xlarge',
             'partitions': str(truncated_parts)
         }
         return settings
 
     @staticmethod
-    def get_cluster_steps():
+    def get_cluster_steps(settings, template, sql, dest_table, dest_path):
+        step_args = ['spark-submit',
+                     '--deploy-mode', 'cluster',
+                     '--master', 'yarn',
+                     '--class', 'com.tog.template.Main',
+                     '--num-executors', settings['executors'],
+                     '--conf', f'spark.sql.shuffle.partitions={settings["partitions"]}',
+                     template, sql, dest_table, dest_path]
+
         steps = [
             {
                 'Name': 'ETLCustomQuery',
@@ -47,7 +55,8 @@ class Cluster:
         return steps
 
     @staticmethod
-    def get_cluster_configs():
+    def get_cluster_configurations():
+        mongo_server_ip = requests.get('https://api.ipify.org').text
         configs = [
             {
                 'Classification': 'core-site',
@@ -88,7 +97,7 @@ class Cluster:
         return tags
 
     @staticmethod
-    def get_instance_config(settings, sg_master, sg_slave, service_access_sg):
+    def get_instance_config(settings, sg_master, sg_slave, service_access_sg, subnet_id):
         print('Instance configs' , settings, sg_master, sg_slave, service_access_sg)
 
         instance_cfg = {
@@ -99,8 +108,8 @@ class Cluster:
             'TerminationProtected': False,
             'Ec2SubnetId': subnet_id,
             'Ec2KeyName': Cluster.ec2_key_name,
-            'EmrManagedMasterSecurityGroup': security_group_master,
-            'EmrManagedSlaveSecurityGroup': security_group_slave,
+            'EmrManagedMasterSecurityGroup': sg_master,
+            'EmrManagedSlaveSecurityGroup': sg_slave,
             'ServiceAccessSecurityGroup': service_access_sg
         }
 
@@ -125,21 +134,11 @@ class Cluster:
         sql_query = sql.replace('\n', ' ')\
                         .replace('`', '\`')
 
-        step_args = ['spark-submit',
-                     '--deploy-mode', 'cluster',
-                     '--master', 'yarn',
-                     '--class', 'com.tog.template.Main',
-                     '--num-executors', settings['executors'],
-                     '--conf', f'spark.sql.shuffle.partitions={settings["partitions"]}',
-                     template_path,
-                     sql_query, destination_table,
-                     destination_path]
         app_names = ['spark', 'hive']
         apps = [dict(Name=x) for x in app_names]
 
-        mongo_server_ip = requests.get('https://api.ipify.org').text
 
-        print(f'Submitting job with {" ".join(step_args)}')
+        #print(f'Submitting job with {" ".join(step_args)}')
         resp = Cluster.client.run_job_flow(
             Name = name,
             LogUri = logs_path,
@@ -148,9 +147,16 @@ class Cluster:
                 settings,
                 security_group_master,
                 security_group_slave,
-                service_access_sg
+                service_access_sg,
+                subnet_id
             ),
-            Steps = Cluster.get_cluster_steps(),
+            Steps = Cluster.get_cluster_steps(
+                settings,
+                template_path,
+                sql_query,
+                destination_table,
+                destination_path
+            ),
             Configurations = Cluster.get_cluster_configurations(),
             Tags = Cluster.get_cluster_tags(),
             Applications = apps,
