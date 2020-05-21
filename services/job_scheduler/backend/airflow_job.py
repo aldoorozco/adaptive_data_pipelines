@@ -55,7 +55,7 @@ class Job:
         configs['crawler_role_arn'] = foundation_output['glue_role']
         configs['logs_path'] = 's3://' + foundation_output['logs_bucket']
         configs['destination_path'] = 's3://' + foundation_output['datamart_bucket']
-        configs['service_access_sg'] = foundation_output['emr_role']
+        configs['service_access_sg'] = foundation_output['emr_service_access_sg']
 
         Job.create_dag(superserver_output['public_ip'], configs)
 

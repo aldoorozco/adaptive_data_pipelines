@@ -50,6 +50,10 @@ output "foundation_slave_security_group" {
   value = module.foundation.slave_security_group
 }
 
+output "foundation_emr_service_access_sg" {
+  value = module.foundation.emr_service_access_sg
+}
+
 output "superserver_public_ip" {
   value = module.superserver.public_ip
 }
