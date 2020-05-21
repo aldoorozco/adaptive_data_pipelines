@@ -241,3 +241,17 @@ resource "aws_security_group" "nat" {
     Name = "NAT Security Group"
   }
 }
+
+resource "aws_security_group" "emr_service_access" {
+  vpc_id                 = aws_vpc.tog.id
+  name                   = "EMR Service Access"
+  revoke_rules_on_delete = true
+
+  egress {
+    from_port   = 8443
+    to_port     = 8443
+    protocol    = "tcp"
+    cidr_blocks = [local.public_access]
+  }
+}
+

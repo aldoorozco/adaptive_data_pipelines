@@ -1,6 +1,7 @@
 from clients import Clients
 from storage import Storage
 from os.path import basename, dirname
+from multiprocessing import Pool
 
 import requests
 import re
@@ -10,18 +11,16 @@ import os
 
 class DagHandler:
     glue_client = Clients.glue_client
-    storage = Storage()
-    bucket = 'abdp-templates'
-    key = 'spark'
-    template = storage.copy_bucket(
-         '/app/template/target/tog-0.1.jar',
-         bucket,
-         key
-    )
-    #table_name_regex = re.compile(r'.*from `?([\.\w]+)`?.*')
 
     def __init__(self):
-        pass
+        storage = Storage()
+        templates_bucket = 'abdp-templates'
+        folder = 'spark'
+        template = storage.copy_bucket(
+             '/app/template/target/tog-0.1.jar',
+             templates_bucket,
+             folder
+        )
 
     @staticmethod
     def run(configs):
@@ -31,20 +30,10 @@ class DagHandler:
 
         crawler_role_arn = configs['crawler_role_arn']
 
+        crawlers = []
         for i in range(1, source_count + 1):
-            print(f'source{i}_path')
-            print(f'source{i}_table')
             source_path = configs[f'source{i}_path']
             source_table = configs[f'source{i}_table']
-            #suffix_table = basename(source_path.rstrip('/'))
-            #autogen_table_name = source_table + suffix_table.replace('.', '_')
-            #print(f'Replacing {source_table} with {new_table_name}')
-            #configs['sql_query'] = configs['sql_query'].replace(
-            #    source_table,
-            #    new_table_name
-            #)
-            #print(f'After replacement SQL:\n{configs["sql_query"]}')
-
             job_name = f'{configs["job_name"]}_{source_table}'
 
             # Create and start crawler
@@ -54,7 +43,12 @@ class DagHandler:
                 source_table,
                 crawler_role_arn
             )
-        print(f'After replacement SQL:\n{configs["sql_query"]}')
+
+            crawlers.append(crawler_name)
+
+        with Pool() as p:
+            p.map(DagHandler.wait_for_crawler_ready, crawlers)
+        #print(f'After replacement SQL:\n{configs["sql_query"]}')
 
         # Create the airflow DAG
         DagHandler.create_dag_from_template(configs)
@@ -84,22 +78,7 @@ class DagHandler:
             }
         )
         resp = DagHandler.glue_client.start_crawler(Name=crawler_name)
-        DagHandler.wait_for_crawler_ready(crawler_name)
-        #DagHandler.rename_table(autogen_table_name, source_table)
         return crawler_name
-
-    @staticmethod
-    def rename_table(old_name, new_name):
-        database = 'default'
-        resp = DagHandler.glue_client.get_table(DatabaseName=database, Name=old_name)
-        table_input = response['Table']
-        table_input['Name'] = new_name
-        table_input.pop('CreatedBy')
-        table_input.pop('CreateTime')
-        table_input.pop('UpdateTime')
-        table_input.pop('DatabaseName')
-        resp2 = DagHandler.glue_client.create_table(DatabaseName=database, TableInput=table_input)
-        print(f'Response to create new table {resp2}')
 
     @staticmethod
     def create_dag_from_template(configs):
@@ -145,7 +124,7 @@ class DagHandler:
     @staticmethod
     def wait_for_crawler_ready(crawler_name):
         ready = False
-        print('Waiting for crawler to become available...')
+        print('Waiting for {crawler_name} to become ready...')
         while not ready:
             resp = DagHandler.glue_client.get_crawler(Name=crawler_name)
             state = resp['Crawler']['State']

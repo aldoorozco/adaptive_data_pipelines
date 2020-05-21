@@ -21,3 +21,7 @@ output "slave_security_group" {
 output "superserver_keypair" {
   value = aws_key_pair.deployer.key_name
 }
+
+output "emr_service_access_sg" {
+  value = aws_security_group.emr_service_access.id
+}

@@ -37,3 +37,6 @@ output "slave_security_group" {
 output "superserver_keypair" {
   value = module.vpc.superserver_keypair
 }
+output "emr_service_access_sg" {
+  value = module.vpc.emr_service_access_sg
+}
