@@ -24,7 +24,7 @@ class Cluster:
         settings = {
             'executors': str(instances + 1),
             'cores': '5',
-            'memory': '18G',
+            'memory': '17G',
             'instance_type': 'm5.4xlarge',
             'partitions': str(truncated_parts)
         }
@@ -37,8 +37,10 @@ class Cluster:
                      '--master', 'yarn',
                      '--class', 'com.tog.template.Main',
                      '--num-executors', settings['executors'],
+                     '--executor-cores', '5',
+                     '--executor-memory', '18g',
                      '--conf', f'spark.sql.shuffle.partitions={settings["partitions"]}',
-                     template, sql, dest_table, dest_path]
+                     template, sql, dest_table, dest_path, '30']
 
         steps = [
             {
