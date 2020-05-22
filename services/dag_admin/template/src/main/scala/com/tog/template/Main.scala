@@ -38,14 +38,18 @@ object Main {
     val sqlQuery = args(0)
     val destTable = args(1)
     val destPath = args(2)
+    val partitions = args(3)
 
     logger.info(s"SQL query:\n$sqlQuery")
     logger.info(s"Dumping results in $destTable")
     val result = sparkSession.sql(sqlQuery)
+                    .cache
                     .withColumn("dateid", lit(LocalDate.now.toString))
 
     if (!destTable.trim.isEmpty) {
-        result.write.mode("overwrite")
+        result.coalesce(partitions.toInt)
+            .write
+            .mode("overwrite")
             .partitionBy("dateid")
             .option("path", destPath + "/results")
             .saveAsTable(destTable)

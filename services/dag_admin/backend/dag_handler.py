@@ -11,12 +11,13 @@ import os
 
 class DagHandler:
     glue_client = Clients.glue_client
+    template = None
 
     def __init__(self):
         storage = Storage()
         templates_bucket = 'abdp-templates'
         folder = 'spark'
-        template = storage.copy_bucket(
+        DagHandler.template = storage.copy_bucket(
              '/app/template/target/tog-0.1.jar',
              templates_bucket,
              folder
@@ -46,9 +47,8 @@ class DagHandler:
 
             crawlers.append(crawler_name)
 
-        with Pool() as p:
-            p.map(DagHandler.wait_for_crawler_ready, crawlers)
-        #print(f'After replacement SQL:\n{configs["sql_query"]}')
+        for c in crawlers:
+            DagHandler.wait_for_crawler_ready(c)
 
         # Create the airflow DAG
         DagHandler.create_dag_from_template(configs)
@@ -124,10 +124,10 @@ class DagHandler:
     @staticmethod
     def wait_for_crawler_ready(crawler_name):
         ready = False
-        print('Waiting for {crawler_name} to become ready...')
+        print(f'Waiting for {crawler_name} to become ready...')
         while not ready:
             resp = DagHandler.glue_client.get_crawler(Name=crawler_name)
             state = resp['Crawler']['State']
             ready = (state == 'READY')
             time.sleep(0.5)
-        print('Done')
+        print(f'Done {crawler_name}')
