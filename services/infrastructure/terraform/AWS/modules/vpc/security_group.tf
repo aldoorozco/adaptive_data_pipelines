@@ -82,6 +82,25 @@ resource "aws_security_group" "superserver" {
   }
 }
 
+resource "aws_security_group" "glue_endpoint" {
+  vpc_id      = aws_vpc.tog.id
+  name        = "Glue Endpoint"
+  description = "Allows traffic for glue"
+
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [local.public_access]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [local.public_access]
+  }
+}
+
 /*
 resource "aws_security_group" "nat" {
   name        = "NAT"

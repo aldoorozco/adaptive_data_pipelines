@@ -1,7 +1,3 @@
-locals {
-  public_access = "0.0.0.0/0"
-}
-
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.tog.id
 
@@ -19,9 +15,16 @@ resource "aws_route_table" "private" {
   vpc_id = aws_vpc.tog.id
 
   route {
-    cidr_block  = local.public_access
-    instance_id = aws_nat_gateway.tog.id
+    cidr_block     = local.public_access
+    nat_gateway_id = aws_nat_gateway.tog.id
   }
+
+  /*
+  route {
+    cidr_block           = aws_vpc_endpoint.glue.
+    network_interface_id = aws_vpc_endpoint.glue.
+  }
+  */
 
   tags = {
     Name = "Private"
