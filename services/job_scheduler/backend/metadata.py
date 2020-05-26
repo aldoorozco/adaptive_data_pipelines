@@ -1,84 +1,17 @@
-from pyspark.sql import SparkSession
 from os import listdir
 from os.path import isfile, getsize, join
 from collections import Counter
 
-class Metadata():
-    def __init__(self, source_type, database=None, table=None, filename=None):
-        # The source is a directory
-        if source_type is None:
-            self.files = [join(filename, f) for f in listdir(filename) if isfile(join(filename, f))]
-            sizes = [getsize(f) for f in self.files]
-            self.size = sum(sizes)
-            cntr = Counter([f.split('.')[1] for f in self.files])
-            sorted_extensions = {k: v for k, v in sorted(cntr.items(), key=lambda item: item[1])}
-            self.source_type = list(sorted_extensions.keys())[0]
-        else:
-            spark = (
-                SparkSession.builder
-                          .appName('Metadata extractor')
-                          .config('spark.jars.packages', 'com.crealytics:spark-excel_2.11:0.11.1')
-                          .config('spark.sql.shuffle.partitions', '10')
-                             # Allows quicker transformations between pandas and spark dataframes
-                          .config('spark.sql.execution.arrow.enabled', 'true')
-                          .getOrCreate()
-            )
-            switcher = {
-                'csv': self.get_csv,
-                'xlsx': self.get_excel,
-                'json': self.get_json,
-                'mysql': self.get_mysql
-            }
-            f = switcher.get(source_type, 'Invalid option')
-            source_path = ''
-            if f is not None:
-                if source_type == 'mysql':
-                    df = f(database, table, spark)
-                    source_path = '{}.{}'.format(database, table)
-                else:
-                    df = f(filename, spark)
-                    source_path = filename
-            else:
-                raise Exception('Unable to find option {}'.format(input_type))
+class Metadata:
+    def __init__(self, filepath):
+        # Get all files in the filepath
+        self.files = [join(filepath, f) for f in listdir(filepath) if isfile(join(filepath, f))]
 
-            # TODO: get the real size from mysql
-            self.size = 0 if source_type == 'mysql' else getsize(filename)
-            self.source_type = source_type
-            self.files = [filename]
+        # Get the total size of all files combined
+        sizes = [getsize(f) for f in self.files]
+        self.size = sum(sizes)
 
-    def get_csv(self, file_name, spark):
-        df = spark.read.option('header', 'true').csv(file_name)
-        return df
-
-    def get_excel(self, file_name, spark, sheet_name='Sheet1'):
-        data_address = f"'{sheet_name}'!A1"
-
-        df = (
-            spark.read
-                .format('com.crealytics.spark.excel')
-                .option('dataAddress', data_address)
-                .option('useHeader', True)
-                .option('multiline', True)
-                .option('inferSchema', True)
-                .load(filename)
-        )
-
-        return df
-
-    def get_json(self, file_name, spark):
-        df = spark.read.json(file_name)
-        return df
-
-    def get_mysql(self, database, table, spark):
-        url = f'jdbc:mysql://{host}:{port}/{database}?useUnicode=true'
-
-        properties = {'user' : 'user',
-                      'password' : 'password',
-                      'driver' : 'com.mysql.cj.jdbc.Driver',
-                      'autoReconnect' : 'true',
-                      'useSSL' : 'false',
-                      'serverTimezone' : 'UTC'}
-
-        df = spark.read.jdbc(url=url, table=table, properties=properties)
-        return df
-
+        # Get the most common data set extension
+        cntr = Counter([f.split('.')[1] for f in self.files])
+        sorted_extensions = {k: v for k, v in sorted(cntr.items(), key=lambda item: item[1])}
+        self.source_type = list(sorted_extensions.keys())[0]

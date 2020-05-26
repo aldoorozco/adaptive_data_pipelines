@@ -1,5 +1,4 @@
 from storage import Storage
-from clients import Clients
 from metadata import Metadata
 from datetime import datetime
 from os.path import dirname, isfile, isdir, basename
@@ -60,24 +59,8 @@ class Job:
         Job.create_dag(superserver_output['public_ip'], configs)
 
     @staticmethod
-    def get_metadata(file_path=None, database=None, table=None):
-        metadata = None
-        if file_path:
-            if file_path.endswith('csv'):
-                metadata = Metadata('csv', filename=file_path) 
-            elif file_path.endswith('xlsx'):
-                metadata = Metadata('xlsx', filename=file_path)
-            elif file_path.endswith('json'):
-                metadata = Metadata('json', filename=file_path)
-            elif isdir(file_path):
-                metadata = Metadata(None, filename=file_path)
-            else:
-                raise Exception('Invalid metadata')
-        elif database is not None and table is not None:
-            metadata = Metadata('mysql', database=database, table=table)
-        else:
-            raise Exception(f'[Error] Invalid database/table {database}/{table}')
-        return metadata
+    def get_metadata(file_path):
+        return Metadata(file_path)
 
     @staticmethod
     def migrate(datalake_bucket, source_path, table_name, dateid):
