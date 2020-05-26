@@ -1,38 +1,40 @@
 # Adaptive Big Data Pipelines
 
-This project allows users with minimum experience on SQL to be able to:
+This project allows users to:
 
 1. Migrate existing data sets to the cloud
-2. Automatically build ETL pipelines based on custom SQL queries
-3. Schedule the ETL to run on a regular basis
-
-This project encompasses the best of three worlds:
-
-* DevOps Infrastructure as Code (IaC)
-* Data Engineering ETL pipelines
-* Microservices
+2. Easily build ETL pipelines based on custom SQL queries
+3. Schedule those ETLs
+4. Automatically plot the lineage DAG of the ETL.
 
 ### Prerequisites
 
 After cloning this repository, you will need the following code pieces:
 
 ```
-1. Python 3: python3, python3-pip, python3-devel
-2. Docker Community Edition (including Docker compose)
-3. AWS account: user with programatic access (credentials file). Copy the file to `services`
-4. ...
+1. Python3.7: python3.7, python3.7-pip
+   1.1. Install awscli with pip3.7
+1. Docker Community Edition (including Docker compose)
+2. AWS account:
+   2.1. A user with programatic access as well as the following permissions:
+     Full access: VPC, S3, IAM, and EC2
+   2.2. Configure the user following this guide: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html
 ```
 
 ### Launch
 
-Move to the services folder and run the following command:
+Move to the `services` folder and run the following command:
 
 ```
 ./setup.sh local
 ```
 
-### Credits
+### License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+
+### Authors
 
 This project is currently maintained by:
 
-* Aldo Orozco <aldo.orozco.g@gmail.com>
+* **Aldo Orozco <aldo.orozco.g@gmail.com>** - *Initial work*

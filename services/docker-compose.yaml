@@ -1,24 +1,24 @@
 version: "3"
 services:
-    redis:
-        container_name: redis
-        image: redis:5.0.5
+    airflow_scheduler:
+        container_name: airflow_scheduler
+        build: airflow/
         restart: always
-
-    postgres:
-        container_name: postgres
-        image: postgres:9.6
-        restart: always
+        depends_on:
+            - webserver
+        volumes:
+            - ./dag_admin/dags:/usr/local/airflow/dags
         environment:
-            - POSTGRES_USER=airflow
-            - POSTGRES_PASSWORD=airflow
-            - POSTGRES_DB=airflow
-        logging:
-            driver: none
+            - LOAD_EX=n
+            - FERNET_KEY=$FERNET_KEY
+            - EXECUTOR=Celery
+            - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+            - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=10
+        command: scheduler
 
-    webserver:
+    airflow_webserver:
         container_name: airflow_webserver
-        build: airflow_webserver/
+        build: airflow/
         restart: always
         depends_on:
             - postgres
@@ -41,6 +41,38 @@ services:
             timeout: 30s
             retries: 3
 
+    airflow_worker:
+        container_name: airflow_worker
+        build: airflow/
+        restart: always
+        depends_on:
+            - scheduler
+        volumes:
+            - ./dag_admin/dags:/usr/local/airflow/dags
+        environment:
+            - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+            - FERNET_KEY=$FERNET_KEY
+            - EXECUTOR=Celery
+            - "PYTHONPATH=$PYTHONPATH:/usr/local/airflow/dags"
+            - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=10
+        command: worker
+
+    redis:
+        container_name: redis
+        image: redis:5.0.5
+        restart: always
+
+    postgres:
+        container_name: postgres
+        image: postgres:9.6
+        restart: always
+        environment:
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflow
+            - POSTGRES_DB=airflow
+        logging:
+            driver: none
+
     flower:
         container_name: airflow_flower
         image: puckel/docker-airflow:1.10.4
@@ -55,37 +87,13 @@ services:
         logging:
             driver: none
 
-    scheduler:
-        container_name: airflow_scheduler
-        build: airflow_scheduler/
-        restart: always
-        depends_on:
-            - webserver
-        volumes:
-            - ./dag_admin/dags:/usr/local/airflow/dags
-        environment:
-            - LOAD_EX=n
-            - FERNET_KEY=$FERNET_KEY
-            - EXECUTOR=Celery
-            - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
-            - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=10
-        command: scheduler
-
-    worker:
-        container_name: airflow_worker
-        build: airflow_worker/
-        restart: always
-        depends_on:
-            - scheduler
-        volumes:
-            - ./dag_admin/dags:/usr/local/airflow/dags
-        environment:
-            - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
-            - FERNET_KEY=$FERNET_KEY
-            - EXECUTOR=Celery
-            - "PYTHONPATH=$PYTHONPATH:/usr/local/airflow/dags"
-            - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=10
-        command: worker
+    mongo:
+        container_name: mongo
+        image: mongo:3.4.23
+        ports:
+        - "27017:27017"
+        logging:
+            driver: none
 
     infrastructure: 
         container_name: infrastructure
@@ -119,14 +127,6 @@ services:
         volumes:
         - ./dag_admin/dags:/app/backend/dags
 
-    mongo:
-        container_name: mongo
-        image: mongo:3.4.23
-        ports:
-        - "27017:27017"
-        logging:
-            driver: none
-
     governance:
         container_name: governance
         build: governance/
@@ -137,8 +137,8 @@ services:
         logging:
             driver: none
 
-    ui: 
+    webserver: 
         container_name: webserver
-        build: ui/ 
+        build: webserver/ 
         ports: 
         - "8080:8080"

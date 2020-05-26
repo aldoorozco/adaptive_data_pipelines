@@ -9,4 +9,3 @@ __pycache__
 derby.log
 metastore_db
 target
-credentials
