@@ -5,7 +5,7 @@ services:
         build: airflow/
         restart: always
         depends_on:
-            - webserver
+            - airflow_webserver
         volumes:
             - ./dag_admin/dags:/usr/local/airflow/dags
         environment:
@@ -46,7 +46,7 @@ services:
         build: airflow/
         restart: always
         depends_on:
-            - scheduler
+            - airflow_scheduler
         volumes:
             - ./dag_admin/dags:/usr/local/airflow/dags
         environment:
